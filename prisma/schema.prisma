@@ -12,3 +12,70 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// ENUMS (state)
+
+enum CauseStatus {
+  DRAFT
+  UNVERIFIED
+  VERIFIED
+  SUSPENDED
+  CLOSED
+}
+
+enum DonationIntentStatus {
+  PENDING
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentAttemptStatus {
+  INITIATED
+  SUCCEEDED
+  FAILED
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String?
+  causes    Cause[]
+  donations Donation[]
+  createdAt DateTime   @default(now())
+}
+
+model Cause {
+  id           String     @id @default(cuid())
+  title        String
+  description  String
+  goalAmount   Float
+  raisedAmount Float      @default(0)
+  owner        User       @relation(fields: [ownerId], references: [id])
+  ownerId      String
+  donations    Donation[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  isActive     Boolean    @default(true)
+}
+
+model Donation {
+  id        String   @id @default(cuid())
+  amount    Float
+  donor     User     @relation(fields: [donorId], references: [id])
+  donorId   String
+  cause     Cause    @relation(fields: [causeId], references: [id])
+  causeId   String
+  payment   Payment?
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  donation      Donation @relation(fields: [donationId], references: [id])
+  donationId    String   @unique
+  status        String
+  provider      String
+  transactionId String
+  createdAt     DateTime @default(now())
+}
